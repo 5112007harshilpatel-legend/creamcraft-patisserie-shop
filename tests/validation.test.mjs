@@ -1,0 +1,7 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {validate,imageType,MAX_IMAGE} from '../supabase/functions/cc-submit/validation.mjs';
+const data={kind:'order',id:'12345678-1234-4123-8123-123456789012',name:'Test',email:'test@example.com',occasion:'Birthday',date:new Date(Date.now()+86400000*7).toISOString().slice(0,10),flavour:'Madagascar vanilla & berry',size:'6 inch · 6–8 servings',dietary:'',notes:''};
+test('valid order normalizes email, ignores caller status',()=>{const r=validate({...data,email:'TEST@example.com',status:'completed'});assert.equal(r.email,'test@example.com');assert.equal(r.status,undefined);});
+test('reject invalid fields and honeypot',()=>{for(const patch of [{name:''},{email:'bad'},{date:'2026-02-30'},{date:'2020-01-01'},{size:'bad'},{flavour:'bad'},{occasion:'bad'},{website:'bot'},{notes:'x'.repeat(2001)},{id:'sql injection'}])assert.throws(()=>validate({...data,...patch}));});
+test('contact valid and invalid',()=>{assert.equal(validate({...data,kind:'contact',message:'Hi'}).message,'Hi');assert.throws(()=>validate({...data,kind:'contact',message:''}));});
+test('image signatures and size',()=>{assert.equal(imageType(Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,0])),'image/png');assert.equal(imageType(Uint8Array.from([255,216,255,...Array(9).fill(0)])),'image/jpeg');assert.equal(imageType(new TextEncoder().encode('RIFF0000WEBP')),'image/webp');assert.throws(()=>imageType(new TextEncoder().encode('<svg>bad</svg>')));assert.throws(()=>imageType(new Uint8Array(MAX_IMAGE+1)));});

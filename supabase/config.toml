@@ -1,0 +1,4 @@
+project_id = "oawjzhjiglvnzepoofoc"
+[functions.cc-submit]
+# Intentionally public. Validation, honeypot, atomic rate limits and size caps are enforced inside.
+verify_jwt = false
